@@ -239,6 +239,12 @@ typedef struct
     // case 0x09: return "MPEGJStream";
     unsigned stream_type;
 
+    // Track-header presentation transform. Matrix entries use the ISO BMFF
+    // 16.16 fixed-point representation, except matrix[8] which is 2.30.
+    int32_t track_matrix[9];
+    unsigned display_width_fixed;
+    unsigned display_height_fixed;
+
     union
     {
         // for handler_type == 'soun' tracks
@@ -2598,6 +2604,7 @@ int MP4D_open(MP4D_demux_t *mp4, int (*read_callback)(int64_t offset, void *buff
         } g_fullbox[] =
         {
 #if MP4D_INFO_SUPPORTED
+            {BOX_tkhd, 1, 1},
             {BOX_mdhd, 1, 1},
             {BOX_mvhd, 1, 0},
             {BOX_hdlr, 0, 0},
@@ -2917,6 +2924,28 @@ broken_android_meta_hack:
             break;
 
 #if MP4D_INFO_SUPPORTED
+        case BOX_tkhd:
+            if (!tr)
+            {
+                ERROR("broken file structure!");
+            }
+            if ((FullAtomVersionAndFlags >> 24) == 1)
+            {
+                SKIP(8 + 8 + 4 + 4 + 8); // creation, modification, id, reserved, duration
+            }
+            else
+            {
+                SKIP(4 + 4 + 4 + 4 + 4);
+            }
+            SKIP(4*2 + 2 + 2 + 2 + 2); // reserved, layer, alternate group, volume, reserved
+            for (i = 0; i < 9; i++)
+            {
+                tr->track_matrix[i] = (int32_t)READ(4);
+            }
+            tr->display_width_fixed = READ(4);
+            tr->display_height_fixed = READ(4);
+            break;
+
         case BOX_mvhd:
             SKIP(((FullAtomVersionAndFlags >> 24) == 1) ? 8 + 8 : 4 + 4);
             mp4->timescale = READ(4);
