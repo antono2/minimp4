@@ -1,6 +1,5 @@
 module minimp4
 
-
 #flag -I @VMODROOT/include
 
 #define MINIMP4_IMPLEMENTATION

@@ -9,7 +9,7 @@ module minimp4
 //    See <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 //***********************************
-//                  Build configuration                                 
+//                  Build configuration
 //***********************************
 // Max chunks nesting level
 // Support indexing of MP4 files over 4 GB.
@@ -22,7 +22,7 @@ module minimp4
 // Enable code, which prints to stdout supplementary MP4 information:
 // Enable TrackFragmentBaseMediaDecodeTimeBox support
 //***********************************
-//          Some values of MP4(E/D)_track_t->object_type_indication     
+//          Some values of MP4(E/D)_track_t->object_type_indication
 //***********************************
 // MPEG-4 AAC (all profiles)
 // MPEG-2 AAC, Main profile
@@ -32,32 +32,34 @@ module minimp4
 // H.265 (HEVC) video
 // http://www.mp4ra.org/object.html 0xC0-E0  && 0xE2 - 0xFE are specified as "user private"
 //***********************************
-//          API error codes                                             
+//          API error codes
 //***********************************
 //***********************************
-//          Sample kind for MP4E_put_sample()                           
+//          Sample kind for MP4E_put_sample()
 //***********************************
 // (beginning of) audio or video frame
 // mark sample as random access point (key frame)
 // Not a sample, but continuation of previous sample (new slice)
 //***********************************
-//                  Portable 64-bit type definition                     
+//                  Portable 64-bit type definition
 //***********************************
 pub type Boxsize_t = u64
+
 pub type MP4D_file_offset_t = u64
+
 pub const mp4d_handler_type_vide = u32(0x76696465)
 pub const mp4_object_type_avc = u32(0x21)
 pub const mp4_object_type_hevc = u32(0x23)
 
 //***********************************
-//          Some values of MP4D_track_t->handler_type              
+//          Some values of MP4D_track_t->handler_type
 //***********************************
 // Video track : 'vide'
 // Audio track : 'soun'
 // General MPEG-4 systems streams (without specific handler).
 // Used for private stream, as suggested in http://www.mp4ra.org/handler.html
 //***********************************
-//          Data structures                                             
+//          Data structures
 //***********************************
 enum Track_media_kind_t {
 	e_audio
@@ -66,199 +68,208 @@ enum Track_media_kind_t {
 }
 
 pub struct MP4E_track_t {
+
+	// MP4 object type code, which defined codec class for the track.
+	// See MP4E_OBJECT_TYPE_* values for some codecs
 pub mut:
-// MP4 object type code, which defined codec class for the track.
-// See MP4E_OBJECT_TYPE_* values for some codecs
 	object_type_indication u32
-// Track language: 3-char ISO 639-2T code: "und", "eng", "rus", "jpn" etc...
-	language [4]u8
+	// Track language: 3-char ISO 639-2T code: "und", "eng", "rus", "jpn" etc...
+	language         [4]u8
 	track_media_kind Track_media_kind_t
-// 90000 for video, sample rate for audio
-	time_scale u32
+	// 90000 for video, sample rate for audio
+	time_scale       u32
 	default_duration u32
-	u TrackUnion
+	u                TrackUnion
 }
 
 pub union TrackUnion {
-  a ChannelCount
-  v WidthHeight
+	a ChannelCount
+	v WidthHeight
 }
 
 pub struct ChannelCount {
 pub mut:
-  channelcount u32
+	channelcount u32
 }
 
 pub struct WidthHeight {
 pub mut:
-  width int
-  height int
+	width  int
+	height int
 }
 
-pub struct MP4D_track_t { 
+pub struct MP4D_track_t {
+
+	//***********************************
+	//                 mandatory public data
+	//***********************************
+	// How many 'samples' in the track
+	// The 'sample' is MP4 term, denoting audio or video frame
 pub mut:
-//***********************************
-//                 mandatory public data                                
-//***********************************
-// How many 'samples' in the track
-// The 'sample' is MP4 term, denoting audio or video frame
 	sample_count u32
-// Decoder-specific info (DSI) data
+	// Decoder-specific info (DSI) data
 	dsi &u8
-// DSI data size
+	// DSI data size
 	dsi_bytes u32
-// MP4 object type code
-// case 0x00: return "Forbidden";
-// case 0x01: return "Systems ISO/IEC 14496-1";
-// case 0x02: return "Systems ISO/IEC 14496-1";
-// case 0x20: return "Visual ISO/IEC 14496-2";
-// case 0x40: return "Audio ISO/IEC 14496-3";
-// case 0x60: return "Visual ISO/IEC 13818-2 Simple Profile";
-// case 0x61: return "Visual ISO/IEC 13818-2 Main Profile";
-// case 0x62: return "Visual ISO/IEC 13818-2 SNR Profile";
-// case 0x63: return "Visual ISO/IEC 13818-2 Spatial Profile";
-// case 0x64: return "Visual ISO/IEC 13818-2 High Profile";
-// case 0x65: return "Visual ISO/IEC 13818-2 422 Profile";
-// case 0x66: return "Audio ISO/IEC 13818-7 Main Profile";
-// case 0x67: return "Audio ISO/IEC 13818-7 LC Profile";
-// case 0x68: return "Audio ISO/IEC 13818-7 SSR Profile";
-// case 0x69: return "Audio ISO/IEC 13818-3";
-// case 0x6A: return "Visual ISO/IEC 11172-2";
-// case 0x6B: return "Audio ISO/IEC 11172-3";
-// case 0x6C: return "Visual ISO/IEC 10918-1";
+	// MP4 object type code
+	// case 0x00: return "Forbidden";
+	// case 0x01: return "Systems ISO/IEC 14496-1";
+	// case 0x02: return "Systems ISO/IEC 14496-1";
+	// case 0x20: return "Visual ISO/IEC 14496-2";
+	// case 0x40: return "Audio ISO/IEC 14496-3";
+	// case 0x60: return "Visual ISO/IEC 13818-2 Simple Profile";
+	// case 0x61: return "Visual ISO/IEC 13818-2 Main Profile";
+	// case 0x62: return "Visual ISO/IEC 13818-2 SNR Profile";
+	// case 0x63: return "Visual ISO/IEC 13818-2 Spatial Profile";
+	// case 0x64: return "Visual ISO/IEC 13818-2 High Profile";
+	// case 0x65: return "Visual ISO/IEC 13818-2 422 Profile";
+	// case 0x66: return "Audio ISO/IEC 13818-7 Main Profile";
+	// case 0x67: return "Audio ISO/IEC 13818-7 LC Profile";
+	// case 0x68: return "Audio ISO/IEC 13818-7 SSR Profile";
+	// case 0x69: return "Audio ISO/IEC 13818-3";
+	// case 0x6A: return "Visual ISO/IEC 11172-2";
+	// case 0x6B: return "Audio ISO/IEC 11172-3";
+	// case 0x6C: return "Visual ISO/IEC 10918-1";
 	object_type_indication u32
-//***********************************
-//                 informational public data                            
-//***********************************
-// handler_type when present in a media box, is an integer containing one of
-// the following values, or a value from a derived specification:
-// 'vide' Video track
-// 'soun' Audio track
-// 'hint' Hint track
+	//***********************************
+	//                 informational public data
+	//***********************************
+	// handler_type when present in a media box, is an integer containing one of
+	// the following values, or a value from a derived specification:
+	// 'vide' Video track
+	// 'soun' Audio track
+	// 'hint' Hint track
 	handler_type u32
-// Track duration: 64-bit value split into 2 variables
+	// Track duration: 64-bit value split into 2 variables
 	duration_hi u32
 	duration_lo u32
-// duration scale: duration = timescale*seconds
+	// duration scale: duration = timescale*seconds
 	timescale u32
-// Average bitrate, bits per second
+	// Average bitrate, bits per second
 	avg_bitrate_bps u32
-// Track language: 3-char ISO 639-2T code: "und", "eng", "rus", "jpn" etc...
+	// Track language: 3-char ISO 639-2T code: "und", "eng", "rus", "jpn" etc...
 	language [4]u8
-// MP4 stream type
-// case 0x00: return "Forbidden";
-// case 0x01: return "ObjectDescriptorStream";
-// case 0x02: return "ClockReferenceStream";
-// case 0x03: return "SceneDescriptionStream";
-// case 0x04: return "VisualStream";
-// case 0x05: return "AudioStream";
-// case 0x06: return "MPEG7Stream";
-// case 0x07: return "IPMPStream";
-// case 0x08: return "ObjectContentInfoStream";
-// case 0x09: return "MPEGJStream";
-	stream_type u32
-	sampleDescription SampleDescriptionUnion
-//***********************************
-//                 private data: MP4 indexes                            
-//***********************************
-	entry_size &u32
+	// MP4 stream type
+	// case 0x00: return "Forbidden";
+	// case 0x01: return "ObjectDescriptorStream";
+	// case 0x02: return "ClockReferenceStream";
+	// case 0x03: return "SceneDescriptionStream";
+	// case 0x04: return "VisualStream";
+	// case 0x05: return "AudioStream";
+	// case 0x06: return "MPEG7Stream";
+	// case 0x07: return "IPMPStream";
+	// case 0x08: return "ObjectContentInfoStream";
+	// case 0x09: return "MPEGJStream";
+	stream_type          u32
+	track_matrix         [9]i32
+	display_width_fixed  u32
+	display_height_fixed u32
+	sampleDescription    SampleDescriptionUnion
+	//***********************************
+	//                 private data: MP4 indexes
+	//***********************************
+	entry_size            &u32
 	sample_to_chunk_count u32
-	sample_to_chunk &MP4D_sample_to_chunk_t_tag
-	chunk_count u32
-	chunk_offset &MP4D_file_offset_t
-	timestamp &u32
-	duration &u32
+	sample_to_chunk       &MP4D_sample_to_chunk_t_tag
+	chunk_count           u32
+	chunk_offset          &MP4D_file_offset_t
+	timestamp             &u32
+	duration              &u32
 }
 
 pub struct MP4E_mux_tag {
 pub mut:
-  tracks minimp4_vector_t
+	tracks minimp4_vector_t
 }
 
 pub struct minimp4_vector_t {
 pub mut:
-  data &u8
-  bytes int
-  capacity int
+	data     &u8
+	bytes    int
+	capacity int
 }
 
 pub type MP4E_mux_t = MP4E_mux_tag
 
 pub union SampleDescriptionUnion {
 pub mut:
-  audio AudioDescription
-  video VideoDescription
+	audio AudioDescription
+	video VideoDescription
 }
 
 pub struct AudioDescription {
 pub mut:
-  channelcount u32
-  samplerate_hz u32
+	channelcount  u32
+	samplerate_hz u32
 }
 
 pub struct VideoDescription {
 pub mut:
-  width u32
-  height u32
+	width  u32
+	height u32
 }
 
-pub struct MP4D_demux_t { 
+pub struct MP4D_demux_t {
+
+	//***********************************
+	//                 mandatory public data
+	//***********************************
 pub mut:
-//***********************************
-//                 mandatory public data                                
-//***********************************
-	read_pos i64
-	read_size i64
-	track &MP4D_track_t = unsafe{nil}
-	read_callback fn (i64, voidptr, usize, voidptr) int
-	token voidptr
-	track_count u32
-// number of tracks in the movie
-//***********************************
-//                 informational public data                            
-//***********************************
-// Movie duration: 64-bit value split into 2 variables
+	read_pos      i64
+	read_size     i64
+	track         &MP4D_track_t = unsafe { nil }
+	read_callback fn(i64, voidptr, usize, voidptr) int
+	token         voidptr
+	track_count   u32
+	// number of tracks in the movie
+	//***********************************
+	//                 informational public data
+	//***********************************
+	// Movie duration: 64-bit value split into 2 variables
 	duration_hi u32
 	duration_lo u32
-// duration scale: duration = timescale*seconds
+	// duration scale: duration = timescale*seconds
 	timescale u32
-// Metadata tag (optional)
-// Tags provided 'as-is', without any re-encoding
-	tag  struct {	
-	title &u8 = unsafe{nil}
-	artist &u8 = unsafe{nil}
-	album &u8 = unsafe{nil}
-	year &u8 = unsafe{nil}
-	comment &u8 = unsafe{nil}
-	genre &u8 = unsafe{nil}
+	// Metadata tag (optional)
+	// Tags provided 'as-is', without any re-encoding
+	tag struct {
+		title   &u8 = unsafe { nil }
+		artist  &u8 = unsafe { nil }
+		album   &u8 = unsafe { nil }
+		year    &u8 = unsafe { nil }
+		comment &u8 = unsafe { nil }
+		genre   &u8 = unsafe { nil }
+	}
 }
 
-}
-pub struct MP4D_sample_to_chunk_t_tag { 
+pub struct MP4D_sample_to_chunk_t_tag {
 pub mut:
-	first_chunk u32
+	first_chunk       u32
 	samples_per_chunk u32
 }
-pub struct H264_sps_id_patcher_t { 
+
+pub struct H264_sps_id_patcher_t {
 pub mut:
 	sps_cache [32]voidptr
 	pps_cache [256]voidptr
 	sps_bytes [32]int
 	pps_bytes [256]int
-	map_sps [32]int
-	map_pps [256]int
+	map_sps   [32]int
+	map_pps   [256]int
 }
-pub struct Mp4_h26x_writer_t { 
+
+pub struct Mp4_h26x_writer_t {
 pub mut:
-	sps_patcher H264_sps_id_patcher_t
-	mux &MP4E_mux_t
+	sps_patcher  H264_sps_id_patcher_t
+	mux          &MP4E_mux_t
 	mux_track_id int
-	is_hevc int
-	need_vps int
-	need_sps int
-	need_pps int
-	need_idr int
+	is_hevc      int
+	need_vps     int
+	need_sps     int
+	need_pps     int
+	need_idr     int
 }
+
 fn C.mp4_h26x_write_init(h &Mp4_h26x_writer_t, mux &MP4E_mux_t, width int, height int, is_hevc int) int
 
 pub fn mp4_h26x_write_init(h &Mp4_h26x_writer_t, mux &MP4E_mux_t, width int, height int, is_hevc int) int {
@@ -278,7 +289,7 @@ pub fn mp4_h26x_write_nal(h &Mp4_h26x_writer_t, nal &u8, length int, time_stamp9
 }
 
 //***********************************
-//          API                                                         
+//          API
 //***********************************
 //*
 //*  Parse given input stream as MP4 file. Allocate and store data indexes.
@@ -288,9 +299,11 @@ pub fn mp4_h26x_write_nal(h &Mp4_h26x_writer_t, nal &u8, length int, time_stamp9
 //*  It is guaranteed that function will read/seek sequentially,
 //*  and will never jump back.
 //
-fn C.MP4D_open(mp4 &MP4D_demux_t, read_callback fn (i64, voidptr, usize, voidptr) int, token voidptr, file_size i64) int
-pub type PFN_read_callback = fn (i64, voidptr, usize, voidptr) int
-pub fn mp4d_open(mp4 &MP4D_demux_t, read_callback fn (i64, voidptr, usize, voidptr) int, token voidptr, file_size i64) int {
+fn C.MP4D_open(mp4 &MP4D_demux_t, read_callback fn(i64, voidptr, usize, voidptr) int, token voidptr, file_size i64) int
+
+pub type PFN_read_callback = fn(i64, voidptr, usize, voidptr) int
+
+pub fn mp4d_open(mp4 &MP4D_demux_t, read_callback fn(i64, voidptr, usize, voidptr) int, token voidptr, file_size i64) int {
 	return C.MP4D_open(mp4, read_callback, token, file_size)
 }
 
@@ -356,9 +369,9 @@ pub fn mp4d_read_pps(mp4 &MP4D_demux_t, ntrack u32, npps int, pps_bytes &int) vo
 //*
 //*  return multiplexor handle on success; NULL on failure
 //
-fn C.MP4E_open(sequential_mode_flag int, enable_fragmentation int, token voidptr, write_callback fn (i64, voidptr, usize, voidptr) int) &MP4E_mux_t
+fn C.MP4E_open(sequential_mode_flag int, enable_fragmentation int, token voidptr, write_callback fn(i64, voidptr, usize, voidptr) int) &MP4E_mux_t
 
-pub fn mp_4_e_open(sequential_mode_flag int, enable_fragmentation int, token voidptr, write_callback fn (i64, voidptr, usize, voidptr) int) &MP4E_mux_t {
+pub fn mp_4_e_open(sequential_mode_flag int, enable_fragmentation int, token voidptr, write_callback fn(i64, voidptr, usize, voidptr) int) &MP4E_mux_t {
 	return C.MP4E_open(sequential_mode_flag, enable_fragmentation, token, write_callback)
 }
 
@@ -464,89 +477,89 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 	return C.MP4E_set_text_comment(mux, comment)
 }
 
-//MINIMP4_H
-//ChunkLargeOffsetAtomType
-//ChunkOffsetAtomType
-//ClockReferenceMediaHeaderAtomType
-//CompositionOffsetAtomType
-//CopyrightAtomType
-//DataEntryURLAtomType
-//DataEntryURNAtomType
-//DataInformationAtomType
-//DataReferenceAtomType
-//DegradationPriorityAtomType
-//EditAtomType
-//EditListAtomType
-//ExtendedAtomType
-//FreeSpaceAtomType
-//HandlerAtomType
-//HintMediaHeaderAtomType
-//HintTrackReferenceAtomType
-//MediaAtomType
-//MediaDataAtomType
-//MediaHeaderAtomType
-//MediaInformationAtomType
-//MovieAtomType
-//MovieHeaderAtomType
-//SampleDescriptionAtomType
-//SampleSizeAtomType
-//CompactSampleSizeAtomType
-//SampleTableAtomType
-//SampleToChunkAtomType
-//ShadowSyncAtomType
-//SkipAtomType
-//SoundMediaHeaderAtomType
-//SyncSampleAtomType
-//TimeToSampleAtomType
-//TrackAtomType
-//TrackHeaderAtomType
-//TrackReferenceAtomType
-//UserDataAtomType
-//VideoMediaHeaderAtomType
-//GenericVisualSampleEntryAtomType
-//GenericAudioSampleEntryAtomType
-//V2 atoms
-//FileTypeAtomType
-//PaddingBitsAtomType
-//MP4 Atoms
-//SceneDescriptionMediaHeaderAtomType
-//StreamDependenceAtomType
-//ObjectDescriptorAtomType
-//ObjectDescriptorMediaHeaderAtomType
-//ODTrackReferenceAtomType
-//MPEGMediaHeaderAtomType
-//ESDAtomType
-//OCRReferenceAtomType
-//IPIReferenceAtomType
-//MPEGSampleEntryAtomType
-//MPEGAudioSampleEntryAtomType
-//MPEGVisualSampleEntryAtomType
+// MINIMP4_H
+// ChunkLargeOffsetAtomType
+// ChunkOffsetAtomType
+// ClockReferenceMediaHeaderAtomType
+// CompositionOffsetAtomType
+// CopyrightAtomType
+// DataEntryURLAtomType
+// DataEntryURNAtomType
+// DataInformationAtomType
+// DataReferenceAtomType
+// DegradationPriorityAtomType
+// EditAtomType
+// EditListAtomType
+// ExtendedAtomType
+// FreeSpaceAtomType
+// HandlerAtomType
+// HintMediaHeaderAtomType
+// HintTrackReferenceAtomType
+// MediaAtomType
+// MediaDataAtomType
+// MediaHeaderAtomType
+// MediaInformationAtomType
+// MovieAtomType
+// MovieHeaderAtomType
+// SampleDescriptionAtomType
+// SampleSizeAtomType
+// CompactSampleSizeAtomType
+// SampleTableAtomType
+// SampleToChunkAtomType
+// ShadowSyncAtomType
+// SkipAtomType
+// SoundMediaHeaderAtomType
+// SyncSampleAtomType
+// TimeToSampleAtomType
+// TrackAtomType
+// TrackHeaderAtomType
+// TrackReferenceAtomType
+// UserDataAtomType
+// VideoMediaHeaderAtomType
+// GenericVisualSampleEntryAtomType
+// GenericAudioSampleEntryAtomType
+// V2 atoms
+// FileTypeAtomType
+// PaddingBitsAtomType
+// MP4 Atoms
+// SceneDescriptionMediaHeaderAtomType
+// StreamDependenceAtomType
+// ObjectDescriptorAtomType
+// ObjectDescriptorMediaHeaderAtomType
+// ODTrackReferenceAtomType
+// MPEGMediaHeaderAtomType
+// ESDAtomType
+// OCRReferenceAtomType
+// IPIReferenceAtomType
+// MPEGSampleEntryAtomType
+// MPEGAudioSampleEntryAtomType
+// MPEGVisualSampleEntryAtomType
 // http://www.itscj.ipsj.or.jp/sc29/open/29view/29n7644t.doc
 // H264/HEVC
-//3GPP atoms
-//AMRSampleEntryAtomType
-//WB_AMRSampleEntryAtomType
-//AMRConfigAtomType
-//H263SampleEntryAtomType
-//H263ConfigAtomType
-//V2 atoms - Movie Fragments
-//MovieExtendsAtomType
-//TrackExtendsAtomType
-//MovieFragmentAtomType
-//MovieFragmentHeaderAtomType
-//TrackFragmentAtomType
-//TrackFragmentHeaderAtomType
-//TrackFragmentBaseMediaDecodeTimeBox
-//TrackFragmentRunAtomType
-//MovieExtendsHeaderBox
+// 3GPP atoms
+// AMRSampleEntryAtomType
+// WB_AMRSampleEntryAtomType
+// AMRConfigAtomType
+// H263SampleEntryAtomType
+// H263ConfigAtomType
+// V2 atoms - Movie Fragments
+// MovieExtendsAtomType
+// TrackExtendsAtomType
+// MovieFragmentAtomType
+// MovieFragmentHeaderAtomType
+// TrackFragmentAtomType
+// TrackFragmentHeaderAtomType
+// TrackFragmentBaseMediaDecodeTimeBox
+// TrackFragmentRunAtomType
+// MovieExtendsHeaderBox
 // Object Descriptors (OD) data coding
 // These takes only 1 byte; this implementation translate <od_tag> to
 // <od_tag> + OD_BASE to keep API uniform and safe for string functions
 //
-//SDescriptor_Tag
-//DecoderConfigDescriptor_Tag
-//DecoderSpecificInfo_Tag
-//SLConfigDescriptor_Tag
+// SDescriptor_Tag
+// DecoderConfigDescriptor_Tag
+// DecoderSpecificInfo_Tag
+// SLConfigDescriptor_Tag
 // Metagata tags, see http://atomicparsley.sourceforge.net/mpeg-4files.html
 // album
 // artist
@@ -579,7 +592,7 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 // tv season (byte)
 // purchase date
 // Gapless Playback (byte)
-//BOX_aart   = FOUR_CHAR_INT( 'a', 'a', 'r', 't' ),     // Album artist
+// BOX_aart   = FOUR_CHAR_INT( 'a', 'a', 'r', 't' ),     // Album artist
 // artist
 // 3GPP metatags  (http://cpansearch.perl.org/src/JHAR/MP4-Info-1.12/Info.pm)
 // author
@@ -725,9 +738,9 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 // reserved
 // matrix[9]
 // pre_defined[6]
-//next_track_ID is a non-zero integer that indicates a value to use for the track ID of the next track to be
-//added to this presentation. Zero is not a valid track ID value. The value of next_track_ID shall be
-//larger than the largest track-ID in use.
+// next_track_ID is a non-zero integer that indicates a value to use for the track ID of the next track to be
+// added to this presentation. Zero is not a valid track ID value. The value of next_track_ID shall be
+// larger than the largest track-ID in use.
 // skip empty track
 // flag: 1=trak enabled; 2=track in movie; 4=track in preview
 // creation_time
@@ -829,7 +842,7 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 // Num Of Arrays
 // Array Completeness + NAL Unit Type
 //***********************************
-//      indexes                                                         
+//      indexes
 //***********************************
 // Time to Sample Box
 // Sample To Chunk Box
@@ -871,7 +884,7 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 //*
 //*  Unsigned Golomb code
 //
-//get_bits(bs, clz + 1);
+// get_bits(bs, clz + 1);
 //*
 //*  Output bitstream
 //
@@ -901,8 +914,8 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 //
 // cabac_zero_word: no action
 // TODO: assume end-of-nal
-//return 0;
-//while (--j > i) src[j] = 0;
+// return 0;
+// while (--j > i) src[j] = 0;
 //*
 //*  Put NAL escape codes to the output bitstream
 //
@@ -922,14 +935,14 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 //*
 //*  Locate NAL unit in given buffer, and calculate it's length
 //
-//printf("payload_type=%d, intra=%d\n", payload_type, is_intra);
+// printf("payload_type=%d, intra=%d\n", payload_type, is_intra);
 // access unit delimiter, nothing to be done
 // Transcode SPS, PPS and slice headers, reassigning ID's for SPS and  PPS:
 // - assign unique ID's to different SPS and PPS
 // - assign same ID's to equal (except ID) SPS and PPS
 // - save all different SPS and PPS
 // flow through
-//unsigned slice_type = ue_bits(bs);
+// unsigned slice_type = ue_bits(bs);
 // No SPS/PPS transcoding
 // This branch assumes that encoder use correct SPS/PPS ID's
 // flow through
@@ -967,9 +980,9 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 // the next sibling box
 // OD boxes handled in the same way as atom boxes...
 // TODO: BOX_esds can be used for both audio and video, but this code supports audio only!
-//{BOX_moof, BOX_ATOM},
-//{BOX_avc2, BOX_ATOM},
-//{BOX_svc1, BOX_ATOM},
+// {BOX_moof, BOX_ATOM},
+// {BOX_avc2, BOX_ATOM},
+// {BOX_svc1, BOX_ATOM},
 // Read header box type and it's length
 // normal exit
 // Decode box size
@@ -986,10 +999,10 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 // Check that box size <= parent size
 // Skip box with bad size
 // Read box header
-//ISO/IEC 14496-1 Page 38. Section 8.17.2 - Sample Size Box.
-//ISO/IEC 14496-12 Page 38. Section 8.18 - Sample To Chunk Box.
+// ISO/IEC 14496-1 Page 38. Section 8.17.2 - Sample Size Box.
+// ISO/IEC 14496-12 Page 38. Section 8.18 - Sample To Chunk Box.
 // sample_description_index
-//ISO/IEC 14496-12 Page 39. Section 8.19 - Chunk Offset Box.
+// ISO/IEC 14496-12 Page 39. Section 8.19 - Chunk Offset Box.
 // the rest of this box is skipped by default ...
 // When this box is within 'meta' box, the track may not be avaialable
 // pre_defined
@@ -998,17 +1011,17 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 // Set pointer to tag to be read...
 // entry_count, BOX_mp4a & BOX_mp4v boxes follows immediately
 // private stream
-//Base SampleEntry
-//Base SampleEntry
-//samplesize
+// Base SampleEntry
+// Base SampleEntry
+// samplesize
 // AVCSampleEntry extends VisualSampleEntry
 //         case BOX_avc2:   - no test
 //         case BOX_svc1:   - no test
-//Base SampleEntry
+// Base SampleEntry
 // frame_count is always 1
 // compressorname is rarely set..
-//frame_count
-//compressorname
+// frame_count
+// compressorname
 // ^^^ end of VisualSampleEntry
 // now follows for BOX_avc1:
 //      BOX_avcC
@@ -1019,7 +1032,7 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 // AVCDecoderConfigurationRecord()
 // hack: AAC-specific DSI field reused (for it have same purpoose as sps/pps)
 // TODO: check this hack if BOX_esds co-exist with BOX_avcC
-//bit(6) reserved =
+// bit(6) reserved =
 // clears 3 msb for SPS
 // MP4D_AVC_SUPPORTED
 // ES_ID(2) + flags(1)
@@ -1029,11 +1042,11 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 // skip URL
 // ocrflag (was reserved in MPEG-4 v.1)
 // OCRESID
-//ISO/IEC 14496-1 Page 28. Section 8.6.5 - DecoderConfigDescriptor.
+// ISO/IEC 14496-1 Page 28. Section 8.6.5 - DecoderConfigDescriptor.
 // ensured by g_fullbox[] check
-//bufferSizeDB
-//maxBitrate
-//ISO/IEC 14496-1 Page 28. Section 8.6.5 - DecoderConfigDescriptor.
+// bufferSizeDB
+// maxBitrate
+// ISO/IEC 14496-1 Page 28. Section 8.6.5 - DecoderConfigDescriptor.
 // ensured by g_fullbox[] check
 // These bytes available due to check above
 // Read tag is tag pointer is set
@@ -1063,7 +1076,7 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 // Skip all SPS
 // Skip sps/pps before the given target
 //***********************************
-//  Purely informational part, may be removed for embedded applications 
+//  Purely informational part, may be removed for embedded applications
 //***********************************
 //
 // Decodes ISO/IEC 14496 MP4 stream type to ASCII string
@@ -1075,11 +1088,11 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 //*  Print MP4 information to stdout.
 //*  Subject for customization to particular application
 //
-//Output Example #1: movie file
+// Output Example #1: movie file
 //
-//MP4 FILE: 7 tracks found. Movie time 104.12 sec
+// MP4 FILE: 7 tracks found. Movie time 104.12 sec
 //
-//No|type|lng| duration           | bitrate| Stream type            | Object type
+// No|type|lng| duration           | bitrate| Stream type            | Object type
 // 0|odsm|fre|   0.00 s      1 frm|       0| Forbidden              | Forbidden
 // 1|sdsm|fre|   0.00 s      1 frm|       0| Forbidden              | Forbidden
 // 2|vide|```| 104.12 s   2603 frm| 1960559| VisualStream           | Visual ISO/IEC 14496-2   -  720x304
@@ -1088,15 +1101,15 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 // 5|subp|ger|  71.08 s     25 frm|       0| Forbidden              | Forbidden
 // 6|subp|eng|  71.08 s     25 frm|       0| Forbidden              | Forbidden
 //
-//Output Example #2: audio file with tags
+// Output Example #2: audio file with tags
 //
-//MP4 FILE: 1 tracks found. Movie time 92.42 sec
-//title = 86-Second Blowout
-//artist = Yo La Tengo
-//album = May I Sing With Me
-//year = 1992
+// MP4 FILE: 1 tracks found. Movie time 92.42 sec
+// title = 86-Second Blowout
+// artist = Yo La Tengo
+// album = May I Sing With Me
+// year = 1992
 //
-//No|type|lng| duration           | bitrate| Stream type            | Object type
+// No|type|lng| duration           | bitrate| Stream type            | Object type
 // 0|mdir|und|  92.42 s   3980 frm|  128000| AudioStream            | Audio ISO/IEC 14496-3MP4 FILE: 1 tracks found. Movie time 92.42 sec
 //
 //
