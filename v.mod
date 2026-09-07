@@ -1,5 +1,5 @@
 Module {
-  name: 'minimp4'
+  name: 'antono2.minimp4'
   author: 'Anton Oreskin'
   description: 'Reads mp4 video file format. Wrapper around minimp4.h'
   version: '1.0.0'

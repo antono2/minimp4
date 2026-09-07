@@ -13,7 +13,7 @@ compressed samples into pixels or audio.
 ## Install
 
 ```bash
-v install https://github.com/antono2/minimp4
+v install antono2.minimp4
 ```
 
 The C implementation and header are compiled from this module; users do not
