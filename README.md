@@ -39,5 +39,11 @@ v test .
 ```
 
 These compile and link the bundled C implementation and verify representative
-public constants and ABI structures. End-to-end MP4 playback is tested by the
-Vulkan Video player.
+public constants and ABI structures, reject truncated input, and exercise an
+in-memory mux/demux round trip with sample offset, size, timestamp, and duration
+checks. End-to-end MP4 playback is tested by the Vulkan Video player.
+
+## License
+
+The bindings and bundled upstream implementation are distributed under
+[CC0-1.0](LICENSE), matching minimp4's public-domain dedication.

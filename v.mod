@@ -6,6 +6,6 @@ Module {
   repo_url: 'https://github.com/antono2/minimp4'
   vcs: 'git'
   tags: ['V','minimp4','reader','parser']
-  license: 'Public Domain'
+  license: 'CC0-1.0'
   dependencies: []
 }

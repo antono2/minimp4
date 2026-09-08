@@ -50,6 +50,14 @@ pub type MP4D_file_offset_t = u64
 pub const mp4d_handler_type_vide = u32(0x76696465)
 pub const mp4_object_type_avc = u32(0x21)
 pub const mp4_object_type_hevc = u32(0x23)
+pub const mp4e_status_ok = 0
+pub const mp4e_status_bad_arguments = -1
+pub const mp4e_status_no_memory = -2
+pub const mp4e_status_file_write_error = -3
+pub const mp4e_status_only_one_dsi_allowed = -4
+pub const mp4e_sample_default = 0
+pub const mp4e_sample_random_access = 1
+pub const mp4e_sample_continuation = 2
 
 //***********************************
 //          Some values of MP4D_track_t->handler_type
@@ -218,7 +226,7 @@ pub mut:
 	read_pos      i64
 	read_size     i64
 	track         &MP4D_track_t = unsafe { nil }
-	read_callback fn(i64, voidptr, usize, voidptr) int
+	read_callback fn (i64, voidptr, usize, voidptr) int
 	token         voidptr
 	track_count   u32
 	// number of tracks in the movie
@@ -299,11 +307,11 @@ pub fn mp4_h26x_write_nal(h &Mp4_h26x_writer_t, nal &u8, length int, time_stamp9
 //*  It is guaranteed that function will read/seek sequentially,
 //*  and will never jump back.
 //
-fn C.MP4D_open(mp4 &MP4D_demux_t, read_callback fn(i64, voidptr, usize, voidptr) int, token voidptr, file_size i64) int
+fn C.MP4D_open(mp4 &MP4D_demux_t, read_callback fn (i64, voidptr, usize, voidptr) int, token voidptr, file_size i64) int
 
-pub type PFN_read_callback = fn(i64, voidptr, usize, voidptr) int
+pub type PFN_read_callback = fn (i64, voidptr, usize, voidptr) int
 
-pub fn mp4d_open(mp4 &MP4D_demux_t, read_callback fn(i64, voidptr, usize, voidptr) int, token voidptr, file_size i64) int {
+pub fn mp4d_open(mp4 &MP4D_demux_t, read_callback fn (i64, voidptr, usize, voidptr) int, token voidptr, file_size i64) int {
 	return C.MP4D_open(mp4, read_callback, token, file_size)
 }
 
@@ -369,9 +377,9 @@ pub fn mp4d_read_pps(mp4 &MP4D_demux_t, ntrack u32, npps int, pps_bytes &int) vo
 //*
 //*  return multiplexor handle on success; NULL on failure
 //
-fn C.MP4E_open(sequential_mode_flag int, enable_fragmentation int, token voidptr, write_callback fn(i64, voidptr, usize, voidptr) int) &MP4E_mux_t
+fn C.MP4E_open(sequential_mode_flag int, enable_fragmentation int, token voidptr, write_callback fn (i64, voidptr, usize, voidptr) int) &MP4E_mux_t
 
-pub fn mp_4_e_open(sequential_mode_flag int, enable_fragmentation int, token voidptr, write_callback fn(i64, voidptr, usize, voidptr) int) &MP4E_mux_t {
+pub fn mp_4_e_open(sequential_mode_flag int, enable_fragmentation int, token voidptr, write_callback fn (i64, voidptr, usize, voidptr) int) &MP4E_mux_t {
 	return C.MP4E_open(sequential_mode_flag, enable_fragmentation, token, write_callback)
 }
 
