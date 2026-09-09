@@ -1,6 +1,8 @@
 
 # minimp4 bindings for V
 
+[Project portfolio](https://oreskin.de/projects_en.php) · [Support independent development](https://oreskin.de/dono_en.php)
+
 Low-level V bindings for the bundled
 [`lieff/minimp4`](https://github.com/lieff/minimp4) single-header library.
 The module exposes MP4 demuxing and muxing structures and functions, including
