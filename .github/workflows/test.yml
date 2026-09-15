@@ -11,9 +11,30 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  linux:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: prantlf/setup-v-action@v4
       - run: v test .
+
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v7
+      - uses: prantlf/setup-v-action@v4
+      - name: Test with the Microsoft C compiler
+        run: v -cc msvc test .
+
+  test:
+    if: always()
+    needs: [linux, windows]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Verify required platforms
+        env:
+          LINUX_RESULT: ${{ needs.linux.result }}
+          WINDOWS_RESULT: ${{ needs.windows.result }}
+        run: |
+          test "$LINUX_RESULT" = success
+          test "$WINDOWS_RESULT" = success
