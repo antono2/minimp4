@@ -22,6 +22,13 @@ The C implementation and header are compiled from this module; users do not
 need to install a separate `minimp4` system package. A working C compiler is
 required when building an application that imports it.
 
+## Platform support
+
+The bundled C implementation is tested on Linux and on Windows Server 2022
+with MSVC. Windows 10/11 x64 users do not need a separate minimp4 package;
+install V with a working Microsoft C toolchain and use the same `v install`
+command shown above.
+
 ## API scope
 
 The public API intentionally follows the upstream C names closely. Important
@@ -38,6 +45,12 @@ Run the software-only binding smoke tests with:
 
 ```bash
 v test .
+```
+
+On Windows, the CI-equivalent command is:
+
+```powershell
+v -cc msvc test .
 ```
 
 These compile and link the bundled C implementation and verify representative
