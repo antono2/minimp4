@@ -892,7 +892,6 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 //*
 //*  Unsigned Golomb code
 //
-// get_bits(bs, clz + 1);
 //*
 //*  Output bitstream
 //
@@ -922,8 +921,6 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 //
 // cabac_zero_word: no action
 // TODO: assume end-of-nal
-// return 0;
-// while (--j > i) src[j] = 0;
 //*
 //*  Put NAL escape codes to the output bitstream
 //
@@ -943,14 +940,12 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 //*
 //*  Locate NAL unit in given buffer, and calculate it's length
 //
-// printf("payload_type=%d, intra=%d\n", payload_type, is_intra);
 // access unit delimiter, nothing to be done
 // Transcode SPS, PPS and slice headers, reassigning ID's for SPS and  PPS:
 // - assign unique ID's to different SPS and PPS
 // - assign same ID's to equal (except ID) SPS and PPS
 // - save all different SPS and PPS
 // flow through
-// unsigned slice_type = ue_bits(bs);
 // No SPS/PPS transcoding
 // This branch assumes that encoder use correct SPS/PPS ID's
 // flow through
@@ -988,9 +983,6 @@ pub fn mp_4_e_set_text_comment(mux &MP4E_mux_t, comment &i8) int {
 // the next sibling box
 // OD boxes handled in the same way as atom boxes...
 // TODO: BOX_esds can be used for both audio and video, but this code supports audio only!
-// {BOX_moof, BOX_ATOM},
-// {BOX_avc2, BOX_ATOM},
-// {BOX_svc1, BOX_ATOM},
 // Read header box type and it's length
 // normal exit
 // Decode box size
