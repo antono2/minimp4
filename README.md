@@ -39,6 +39,13 @@ Callers own the input/output callbacks and their backing data. Validate file
 sizes, track indexes, sample indexes, offsets, and returned pointers before
 using data from untrusted media.
 
+Read and write callbacks must return `i32`, matching the bundled C library's
+32-bit status result, rather than V's platform-sized `int`. Return zero for
+success and a nonzero value for an I/O error. When updating older callers,
+change the callback's return type from `int` to `i32`; its offset, buffer, size,
+and token arguments are unchanged. This also makes forwarded callbacks safe
+with V3 on 64-bit platforms.
+
 ## Tests
 
 Run the software-only binding smoke tests with:
