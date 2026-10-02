@@ -50,7 +50,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/vc
-          ref: 8af812feb76c678abd86a8e682fd9ab2790e519c
+          # The newer Windows snapshot fails while generating the compiler C
+          # source with TinyCC; retain the previously validated bootstrap there.
+          ref: ${{ runner.os == 'Windows' && '2cbaf6bc2367937cd5f0b4ef923d1ef9aad613b3' || '8af812feb76c678abd86a8e682fd9ab2790e519c' }}
           path: toolchain/v/vc
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
