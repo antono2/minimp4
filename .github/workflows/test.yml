@@ -81,7 +81,8 @@ jobs:
           if (-not $InstallPath) { throw 'Visual Studio C++ tools were not found' }
           Import-Module (Join-Path $InstallPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $InstallPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
-          & ./toolchain/v/v.exe -new-compiler -cc msvc test source
+          # The pinned V3 test runner needs Winsock2-safe Windows headers.
+          & ./toolchain/v/v.exe -new-compiler -cc msvc -cflags '/DWIN32_LEAN_AND_MEAN' test source
           if ($LASTEXITCODE -ne 0) { throw 'Strict V3 callback tests failed' }
 
   test:

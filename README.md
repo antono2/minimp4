@@ -70,6 +70,9 @@ Compiler/bootstrap revisions are pinned in the workflow. The Windows lane
 uses the stack's last validated V3 snapshot while current upstream V has an
 MSVC self-build regression; the Linux lane covers the newer callback-width
 diagnostic without falling back to the compatibility compiler.
+For that pinned Windows V3 version, use
+`v -new-compiler -cc msvc -cflags /DWIN32_LEAN_AND_MEAN test .` so that
+Windows headers do not load legacy Winsock before Winsock2.
 
 ## License
 
