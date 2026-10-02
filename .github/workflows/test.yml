@@ -45,7 +45,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
-          ref: 0dc6a692ed5333cbe3f05ff63ae0766f0333038a
+          # Current V has a Windows/MSVC self-build regression; use the stack's
+          # last validated V3 snapshot there until upstream fixes bootstrap.
+          ref: ${{ runner.os == 'Windows' && 'b99970bd438a7bdcdfbe38f74d9364db801d5439' || '0dc6a692ed5333cbe3f05ff63ae0766f0333038a' }}
           path: toolchain/v
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:

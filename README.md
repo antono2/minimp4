@@ -65,6 +65,12 @@ public constants and ABI structures, reject truncated input, and exercise an
 in-memory mux/demux round trip with sample offset, size, timestamp, and duration
 checks. End-to-end MP4 playback is tested by the Vulkan Video player.
 
+CI also runs strict V3 callback tests with TinyCC on Linux and MSVC on Windows.
+Compiler/bootstrap revisions are pinned in the workflow. The Windows lane
+uses the stack's last validated V3 snapshot while current upstream V has an
+MSVC self-build regression; the Linux lane covers the newer callback-width
+diagnostic without falling back to the compatibility compiler.
+
 ## License
 
 The bindings and bundled upstream implementation are distributed under
