@@ -14,27 +14,88 @@ jobs:
   linux:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: prantlf/setup-v-action@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
+        with:
+          version: 0.5.2
       - run: v test .
 
   windows:
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v7
-      - uses: prantlf/setup-v-action@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
+        with:
+          version: 0.5.2
       - name: Test with the Microsoft C compiler
         run: v -cc msvc test .
 
+  v3:
+    name: Pinned V3 / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: source
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/v
+          # Current V has a Windows/MSVC self-build regression; use the stack's
+          # last validated V3 snapshot there until upstream fixes bootstrap.
+          ref: ${{ runner.os == 'Windows' && 'b99970bd438a7bdcdfbe38f74d9364db801d5439' || '0dc6a692ed5333cbe3f05ff63ae0766f0333038a' }}
+          path: toolchain/v
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/vc
+          # The newer Windows snapshot fails while generating the compiler C
+          # source with TinyCC; retain the previously validated bootstrap there.
+          ref: ${{ runner.os == 'Windows' && '2cbaf6bc2367937cd5f0b4ef923d1ef9aad613b3' || '8af812feb76c678abd86a8e682fd9ab2790e519c' }}
+          path: toolchain/v/vc
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/tccbin
+          ref: ${{ runner.os == 'Windows' && '86ae5844b8b56071b21ae3aa138b247d5eb9ddd9' || 'd6e7ac1b1bcc98aed734a6ecbfa8509f24606c74' }}
+          path: toolchain/v/thirdparty/tcc
+      - name: Build pinned compiler on Linux
+        if: runner.os == 'Linux'
+        run: make -C toolchain/v local=1
+      - name: Test strict V3 callbacks with TinyCC
+        if: runner.os == 'Linux'
+        run: toolchain/v/v -new-compiler -cc tcc test source
+      - name: Build pinned compiler on Windows
+        if: runner.os == 'Windows'
+        shell: cmd
+        working-directory: toolchain/v
+        run: makev.bat -msvc --local
+      - name: Test strict V3 callbacks with MSVC
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $VsWhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $InstallPath = & $VsWhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $InstallPath) { throw 'Visual Studio C++ tools were not found' }
+          Import-Module (Join-Path $InstallPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $InstallPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+          # The pinned V3 test runner needs Winsock2-safe Windows headers.
+          & ./toolchain/v/v.exe -new-compiler -cc msvc -cflags '/DWIN32_LEAN_AND_MEAN' test source
+          if ($LASTEXITCODE -ne 0) { throw 'Strict V3 callback tests failed' }
+
   test:
     if: always()
-    needs: [linux, windows]
+    needs: [linux, windows, v3]
     runs-on: ubuntu-24.04
     steps:
       - name: Verify required platforms
         env:
           LINUX_RESULT: ${{ needs.linux.result }}
           WINDOWS_RESULT: ${{ needs.windows.result }}
+          V3_RESULT: ${{ needs.v3.result }}
         run: |
           test "$LINUX_RESULT" = success
           test "$WINDOWS_RESULT" = success
+          test "$V3_RESULT" = success

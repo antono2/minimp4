@@ -5,7 +5,36 @@ mut:
 	data []u8
 }
 
-fn write_memory(offset i64, buffer voidptr, size usize, token voidptr) int {
+struct FailedIO {
+mut:
+	calls int
+}
+
+fn fail_io(offset i64, buffer voidptr, size usize, token voidptr) i32 {
+	assert offset >= 0
+	assert !isnil(buffer)
+	assert size > 0
+	unsafe {
+		mut failure := &FailedIO(token)
+		failure.calls++
+	}
+	return -7
+}
+
+fn test_forwarded_callbacks_preserve_negative_io_status() {
+	mut read_failure := FailedIO{}
+	mut demux := MP4D_demux_t{}
+	read_callback := PFN_read_callback(fail_io)
+	assert mp4d_open(&demux, read_callback, &read_failure, 64) == 0
+	assert read_failure.calls > 0
+
+	mut write_failure := FailedIO{}
+	write_callback := fail_io
+	assert isnil(mp_4_e_open(0, 0, &write_failure, write_callback))
+	assert write_failure.calls == 1
+}
+
+fn write_memory(offset i64, buffer voidptr, size usize, token voidptr) i32 {
 	if offset < 0 || isnil(token) {
 		return 1
 	}
@@ -20,7 +49,7 @@ fn write_memory(offset i64, buffer voidptr, size usize, token voidptr) int {
 	return 0
 }
 
-fn read_memory(offset i64, buffer voidptr, size usize, token voidptr) int {
+fn read_memory(offset i64, buffer voidptr, size usize, token voidptr) i32 {
 	if offset < 0 || isnil(token) {
 		return 1
 	}
@@ -60,13 +89,13 @@ fn test_mux_demux_round_trip_preserves_sample_timing() {
 
 	track := MP4E_track_t{
 		object_type_indication: mp4_object_type_avc
-		language: [u8(`u`), `n`, `d`, 0]!
-		track_media_kind: .e_video
-		time_scale: 90000
-		default_duration: 3000
-		u: TrackUnion{
+		language:               [u8(`u`), `n`, `d`, 0]!
+		track_media_kind:       .e_video
+		time_scale:             90000
+		default_duration:       3000
+		u:                      TrackUnion{
 			v: WidthHeight{
-				width: 16
+				width:  16
 				height: 16
 			}
 		}

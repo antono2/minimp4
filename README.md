@@ -39,6 +39,13 @@ Callers own the input/output callbacks and their backing data. Validate file
 sizes, track indexes, sample indexes, offsets, and returned pointers before
 using data from untrusted media.
 
+Read and write callbacks must return `i32`, matching the bundled C library's
+32-bit status result, rather than V's platform-sized `int`. Return zero for
+success and a nonzero value for an I/O error. When updating older callers,
+change the callback's return type from `int` to `i32`; its offset, buffer, size,
+and token arguments are unchanged. This also makes forwarded callbacks safe
+with V3 on 64-bit platforms.
+
 ## Tests
 
 Run the software-only binding smoke tests with:
@@ -57,6 +64,15 @@ These compile and link the bundled C implementation and verify representative
 public constants and ABI structures, reject truncated input, and exercise an
 in-memory mux/demux round trip with sample offset, size, timestamp, and duration
 checks. End-to-end MP4 playback is tested by the Vulkan Video player.
+
+CI also runs strict V3 callback tests with TinyCC on Linux and MSVC on Windows.
+Compiler/bootstrap revisions are pinned in the workflow. The Windows lane
+uses the stack's last validated V3 snapshot while current upstream V has an
+MSVC self-build regression; the Linux lane covers the newer callback-width
+diagnostic without falling back to the compatibility compiler.
+For that pinned Windows V3 version, use
+`v -new-compiler -cc msvc -cflags /DWIN32_LEAN_AND_MEAN test .` so that
+Windows headers do not load legacy Winsock before Winsock2.
 
 ## License
 
