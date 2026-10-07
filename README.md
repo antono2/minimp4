@@ -46,6 +46,39 @@ change the callback's return type from `int` to `i32`; its offset, buffer, size,
 and token arguments are unchanged. This also makes forwarded callbacks safe
 with V3 on 64-bit platforms.
 
+## Resource lifetime and timing
+
+`mp4d_open` returns 1 on success and 0 on failure. After a successful open,
+arrange a matching `mp4d_close` to release the demuxer's internal allocations.
+Keep the callback token and backing input alive while the demuxer is in use.
+Track arrays and SPS/PPS pointers belong to the demuxer; copy any data you need
+to retain before closing it.
+
+`mp4d_frame_offset` locates a sample; it does not read the sample bytes for you.
+Use the returned offset and byte count to read from your backing input.
+Timestamps and durations use the selected track's `timescale`, not milliseconds:
+divide by a nonzero `timescale` to convert to seconds. Validate track and sample
+indexes against `track_count` and the track's `sample_count` first.
+
+`mp_4_e_open` returns a null pointer on failure. Keep the output callback and its
+token usable through `mp_4_e_close`: closing can write the final MP4 indexes and
+return an I/O error. Check that return value before treating the output as
+complete. Closing the muxer does not close your backing file or stream.
+The [round-trip test](minimp4_test.v) shows callback signatures, track creation,
+parameter-set setup, sample writing, finalization, and demux queries together.
+
+## Source layout
+
+- `minimp4.v` contains the translated public structures, constants, and C
+  wrappers, with upstream API comments. Callback ABI adjustments are maintained
+  in the committed binding.
+- `minimp4.c.v` selects and compiles the bundled C implementation.
+- `minimp4_test.v` checks callback forwarding and container operations in memory.
+- `include/minimp4.h` is the bundled upstream library; preserve its documentation
+  and license. `include/c2v.toml` records translation flags, but the repository
+  currently has no pinned, end-to-end regeneration script. Review translation
+  changes against the committed ABI rather than blindly replacing the binding.
+
 ## Tests
 
 Run the software-only binding smoke tests with:
