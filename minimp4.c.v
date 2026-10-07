@@ -1,3 +1,5 @@
+// Compiles the bundled minimp4 implementation into importing applications.
+// Feature macros here select the C implementation used by the V declarations.
 module minimp4
 
 #flag -I @VMODROOT/include

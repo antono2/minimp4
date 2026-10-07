@@ -1,3 +1,5 @@
+// Exercises the bundled C ABI and forwarded callback status values without media hardware.
+// Includes rejected input and an in-memory mux/demux round trip with sample timing checks.
 module minimp4
 
 struct MemoryFile {
