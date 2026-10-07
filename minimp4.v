@@ -1,5 +1,8 @@
 @[translated]
 module minimp4
+// Maintained V declarations and wrappers derived from the bundled include/minimp4.h.
+// Exposes MP4 tracks, sample locations and mux/demux callbacks; it does not decode media.
+// Preserve the public names and callback ABI when translating updates; see README.md.
 
 //
 //    https://github.com/aspt/mp4

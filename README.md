@@ -70,14 +70,24 @@ parameter-set setup, sample writing, finalization, and demux queries together.
 ## Source layout
 
 - `minimp4.v` contains the translated public structures, constants, and C
-  wrappers, with upstream API comments. Callback ABI adjustments are maintained
-  in the committed binding.
+  wrappers, with upstream API comments. It is maintained V source derived from
+  translation, not an untouched generated snapshot: exported names, track
+  metadata, constants and callback ABI adjustments live in the committed binding.
 - `minimp4.c.v` selects and compiles the bundled C implementation.
 - `minimp4_test.v` checks callback forwarding and container operations in memory.
 - `include/minimp4.h` is the bundled upstream library; preserve its documentation
   and license. `include/c2v.toml` records translation flags, but the repository
   currently has no pinned, end-to-end regeneration script. Review translation
   changes against the committed ABI rather than blindly replacing the binding.
+
+The `@[translated]` directive enables V compatibility for translated code; it
+does not mean raw translator output is ready to publish. A fresh C2V wrapper
+translation can produce different demux function names, private declarations,
+inline union layouts, missing public constants, and platform-sized callback
+results. Preserve the committed API while reviewing any upstream update. The
+file introduction belongs to this maintained source and should stay with those
+adaptations. A future automated regeneration pipeline must encode and test them
+before it can replace the binding.
 
 ## Tests
 
