@@ -33,16 +33,16 @@ command shown above.
 
 The public API intentionally follows the upstream C names closely. Important
 entry points include `mp4d_open`, `mp4d_frame_offset`, `mp4d_read_sps`,
-`mp4d_read_pps`, and `mp4d_close`, plus the `mp_4_e_*` muxing functions.
+`mp4d_read_pps` and `mp4d_close`, plus the `mp_4_e_*` muxing functions.
 
 Callers own the input/output callbacks and their backing data. Validate file
-sizes, track indexes, sample indexes, offsets, and returned pointers before
+sizes, track indexes, sample indexes, offsets and returned pointers before
 using data from untrusted media.
 
 Read and write callbacks must return `i32`, matching the bundled C library's
 32-bit status result, rather than V's platform-sized `int`. Return zero for
 success and a nonzero value for an I/O error. When updating older callers,
-change the callback's return type from `int` to `i32`; its offset, buffer, size,
+change the callback's return type from `int` to `i32`; its offset, buffer, size
 and token arguments are unchanged. This also makes forwarded callbacks safe
 with V3 on 64-bit platforms.
 
@@ -65,11 +65,11 @@ token usable through `mp_4_e_close`: closing can write the final MP4 indexes and
 return an I/O error. Check that return value before treating the output as
 complete. Closing the muxer does not close your backing file or stream.
 The [round-trip test](minimp4_test.v) shows callback signatures, track creation,
-parameter-set setup, sample writing, finalization, and demux queries together.
+parameter-set setup, sample writing, finalization and demux queries together.
 
 ## Source layout
 
-- `minimp4.v` contains the translated public structures, constants, and C
+- `minimp4.v` contains the translated public structures, constants and C
   wrappers, with upstream API comments. It is maintained V source derived from
   translation, not an untouched generated snapshot: exported names, track
   metadata, constants and callback ABI adjustments live in the committed binding.
@@ -83,7 +83,7 @@ parameter-set setup, sample writing, finalization, and demux queries together.
 The `@[translated]` directive enables V compatibility for translated code; it
 does not mean raw translator output is ready to publish. A fresh C2V wrapper
 translation can produce different demux function names, private declarations,
-inline union layouts, missing public constants, and platform-sized callback
+inline union layouts, missing public constants and platform-sized callback
 results. Preserve the committed API while reviewing any upstream update. The
 file introduction belongs to this maintained source and should stay with those
 adaptations. A future automated regeneration pipeline must encode and test them
@@ -104,8 +104,8 @@ v -cc msvc test .
 ```
 
 These compile and link the bundled C implementation and verify representative
-public constants and ABI structures, reject truncated input, and exercise an
-in-memory mux/demux round trip with sample offset, size, timestamp, and duration
+public constants and ABI structures, reject truncated input and exercise an
+in-memory mux/demux round trip with sample offset, size, timestamp and duration
 checks. End-to-end MP4 playback is tested by the Vulkan Video player.
 
 CI also runs strict V3 callback tests with TinyCC on Linux and MSVC on Windows.
