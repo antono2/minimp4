@@ -77,18 +77,18 @@ jobs:
         shell: cmd
         working-directory: toolchain/v
         run: makev.bat -msvc --local
+      - uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
+        if: runner.os == 'Windows'
+        with:
+          version: 0.5.2
+          install-dependencies: false
+      - name: Configure MSVC x64
+        if: runner.os == 'Windows'
+        uses: antono2/vulkan/.github/actions/setup-msvc@23ec75dc6015776f3012880148ca90e66f63010a
       - name: Test strict V3 callbacks with MSVC
         if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $VsWhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-          $InstallPath = & $VsWhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-          if (-not $InstallPath) { throw 'Visual Studio C++ tools were not found' }
-          Import-Module (Join-Path $InstallPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
-          Enter-VsDevShell -VsInstallPath $InstallPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
-          # The pinned V3 test runner needs Winsock2-safe Windows headers.
-          & ./toolchain/v/v.exe -new-compiler -cc msvc -cflags '/DWIN32_LEAN_AND_MEAN' test source
-          if ($LASTEXITCODE -ne 0) { throw 'Strict V3 callback tests failed' }
+        # The pinned V3 test runner needs Winsock2-safe Windows headers.
+        run: ./toolchain/v/v.exe -new-compiler -cc msvc -cflags '/DWIN32_LEAN_AND_MEAN' test source
 
   test:
     if: always()
