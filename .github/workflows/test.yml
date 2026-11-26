@@ -15,34 +15,33 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+env:
+  V_C_ERROR_BUG_REPORT_DISABLED: '1'
+
 jobs:
-  linux:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
-        with:
-          version: 0.5.2
-      - run: v test .
-
-  windows:
-    runs-on: windows-2022
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
-        with:
-          version: 0.5.2
-      - name: Test with the Microsoft C compiler
-        run: v -cc msvc test .
-
-  v3:
-    name: Pinned V3 / ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+  platforms:
+    name: Current toolchain / ${{ matrix.os }} / ${{ matrix.cc }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, windows-2022]
+        include:
+          - os: ubuntu-24.04
+            cc: tcc
+            bootstrap: cc
+          - os: ubuntu-24.04
+            cc: gcc
+            bootstrap: cc
+          - os: windows-2022
+            cc: tcc
+            bootstrap: tcc
+          - os: windows-2022
+            cc: msvc
+            bootstrap: msvc
+          - os: macos-15
+            cc: clang
+            bootstrap: cc
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -50,57 +49,44 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
-          # Current V has a Windows/MSVC self-build regression; use the stack's
-          # last validated V3 snapshot there until upstream fixes bootstrap.
-          ref: ${{ runner.os == 'Windows' && 'b99970bd438a7bdcdfbe38f74d9364db801d5439' || '0dc6a692ed5333cbe3f05ff63ae0766f0333038a' }}
+          ref: c0bb94990c4c2cd080b27b4e2cbc88a347c6bb4c
           path: toolchain/v
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/vc
-          # The newer Windows snapshot fails while generating the compiler C
-          # source with TinyCC; retain the previously validated bootstrap there.
-          ref: ${{ runner.os == 'Windows' && '2cbaf6bc2367937cd5f0b4ef923d1ef9aad613b3' || '8af812feb76c678abd86a8e682fd9ab2790e519c' }}
+          ref: 1bf1afbd0423212c7555801f5c9c0f56cb8558ab
           path: toolchain/v/vc
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/tccbin
-          ref: ${{ runner.os == 'Windows' && '86ae5844b8b56071b21ae3aa138b247d5eb9ddd9' || 'd6e7ac1b1bcc98aed734a6ecbfa8509f24606c74' }}
+          ref: ${{ runner.os == 'Windows' && 'c2f1eaf22973877b336b8064271d725aa15a420a' || runner.os == 'macOS' && (runner.arch == 'ARM64' && '69ba759bc4ec12bff4098828b5464e99bd29954a' || '566b6dfdb843763533e2134423f75139b4285a03') || '60d606e37e6afe1ac5801fd88c55036a56b7caae' }}
           path: toolchain/v/thirdparty/tcc
-      - name: Build pinned compiler on Linux
-        if: runner.os == 'Linux'
-        run: make -C toolchain/v local=1
-      - name: Test strict V3 callbacks with TinyCC
-        if: runner.os == 'Linux'
-        run: toolchain/v/v -new-compiler -cc tcc test source
-      - name: Build pinned compiler on Windows
+      - name: Bootstrap the tested compiler on Unix
+        if: runner.os != 'Windows'
+        run: env -u VEXE make -C toolchain/v local=1
+      - name: Bootstrap the tested compiler on Windows
         if: runner.os == 'Windows'
         shell: cmd
         working-directory: toolchain/v
-        run: makev.bat -msvc --local
-      - uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
-        if: runner.os == 'Windows'
-        with:
-          version: 0.5.2
-          install-dependencies: false
+        run: makev.bat -${{ matrix.bootstrap }} --local
+      - name: Verify compiler and bootstrap revisions
+        shell: bash
+        run: toolchain/v/v run source/.github/scripts/qualify_toolchain.vsh
       - name: Configure MSVC x64
-        if: runner.os == 'Windows'
+        if: matrix.cc == 'msvc'
         uses: antono2/vulkan/.github/actions/setup-msvc@23ec75dc6015776f3012880148ca90e66f63010a
-      - name: Test strict V3 callbacks with MSVC
-        if: runner.os == 'Windows'
-        # The pinned V3 test runner needs Winsock2-safe Windows headers.
-        run: ./toolchain/v/v.exe -new-compiler -cc msvc -cflags '/DWIN32_LEAN_AND_MEAN' test source
+      - name: Test the native MP4 ABI and callbacks
+        shell: bash
+        env:
+          TEST_CC: ${{ matrix.cc }}
+        run: v -cc "$TEST_CC" -cflags '-DWIN32_LEAN_AND_MEAN' test source
 
   test:
     if: always()
-    needs: [linux, windows, v3]
+    needs: [platforms]
     runs-on: ubuntu-24.04
     steps:
-      - name: Verify required platforms
+      - name: Require every supported compiler configuration
         env:
-          LINUX_RESULT: ${{ needs.linux.result }}
-          WINDOWS_RESULT: ${{ needs.windows.result }}
-          V3_RESULT: ${{ needs.v3.result }}
-        run: |
-          test "$LINUX_RESULT" = success
-          test "$WINDOWS_RESULT" = success
-          test "$V3_RESULT" = success
+          PLATFORM_RESULT: ${{ needs.platforms.result }}
+        run: test "$PLATFORM_RESULT" = success

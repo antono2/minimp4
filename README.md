@@ -108,14 +108,14 @@ public constants and ABI structures, reject truncated input and exercise an
 in-memory mux/demux round trip with sample offset, size, timestamp and duration
 checks. End-to-end MP4 playback is tested by the Vulkan Video player.
 
-CI also runs strict V3 callback tests with TinyCC on Linux and MSVC on Windows.
-Compiler/bootstrap revisions are pinned in the workflow. The Windows lane
-uses the stack's last validated V3 snapshot while current upstream V has an
-MSVC self-build regression; the Linux lane covers the newer callback-width
-diagnostic without falling back to the compatibility compiler.
-For that pinned Windows V3 version, use
-`v -new-compiler -cc msvc -cflags /DWIN32_LEAN_AND_MEAN test .` so that
-Windows headers do not load legacy Winsock before Winsock2.
+CI builds the current tested compiler and its matching bootstrap inputs from
+[`toolchain.json`](toolchain.json). The same V revision tests the native ABI and
+callbacks with TinyCC and GCC on Linux, TinyCC and MSVC on Windows, and Clang on
+macOS. Windows bootstraps the compiler with both TinyCC and MSVC. The compiler's
+default frontend is used throughout.
+
+For Windows, CI also passes `-cflags /DWIN32_LEAN_AND_MEAN` so that Windows
+headers do not load legacy Winsock before Winsock2.
 
 ## License
 
