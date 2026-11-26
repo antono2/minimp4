@@ -37,7 +37,7 @@ fn test_forwarded_callbacks_preserve_negative_io_status() {
 }
 
 fn write_memory(offset i64, buffer voidptr, size usize, token voidptr) i32 {
-	if offset < 0 || isnil(token) {
+	if offset < 0 || offset > max_int || size > usize(max_int - offset) || isnil(token) {
 		return 1
 	}
 	unsafe {
@@ -46,13 +46,13 @@ fn write_memory(offset i64, buffer voidptr, size usize, token voidptr) i32 {
 		if end > file.data.len {
 			file.data << []u8{len: end - file.data.len}
 		}
-		vmemcpy(&u8(file.data.data) + int(offset), buffer, size)
+		vmemcpy(&u8(file.data.data) + int(offset), buffer, int(size))
 	}
 	return 0
 }
 
 fn read_memory(offset i64, buffer voidptr, size usize, token voidptr) i32 {
-	if offset < 0 || isnil(token) {
+	if offset < 0 || offset > max_int || size > usize(max_int - offset) || isnil(token) {
 		return 1
 	}
 	unsafe {
@@ -61,9 +61,26 @@ fn read_memory(offset i64, buffer voidptr, size usize, token voidptr) i32 {
 		if end > file.data.len {
 			return 1
 		}
-		vmemcpy(buffer, &u8(file.data.data) + int(offset), size)
+		vmemcpy(buffer, &u8(file.data.data) + int(offset), int(size))
 	}
 	return 0
+}
+
+fn test_memory_callbacks_reject_ranges_outside_v_array_capacity() {
+	mut file := MemoryFile{
+		data: [u8(1), 2, 3]
+	}
+	mut byte := u8(0)
+	for offset in [i64(-1), i64(max_int) + 1] {
+		assert write_memory(offset, &byte, 1, &file) == 1
+		assert read_memory(offset, &byte, 1, &file) == 1
+	}
+	assert write_memory(max_int, &byte, 1, &file) == 1
+	assert read_memory(max_int, &byte, 1, &file) == 1
+	assert write_memory(0, &byte, usize(max_int) + 1, &file) == 1
+	assert read_memory(0, &byte, usize(max_int) + 1, &file) == 1
+	assert file.data == [u8(1), 2, 3]
+	assert byte == 0
 }
 
 fn test_public_constants_and_structures() {
@@ -110,7 +127,8 @@ fn test_mux_demux_round_trip_preserves_sample_timing() {
 	sample := [u8(0x00), 0x00, 0x00, 0x02, 0x65, 0x88]
 	assert mp_4_e_set_sps(mux, track_id, sps.data, sps.len) == mp4e_status_ok
 	assert mp_4_e_set_pps(mux, track_id, pps.data, pps.len) == mp4e_status_ok
-	assert mp_4_e_put_sample(mux, track_id, sample.data, sample.len, 3000, mp4e_sample_random_access) == mp4e_status_ok
+	assert mp_4_e_put_sample(mux, track_id, sample.data, sample.len, 3000,
+		mp4e_sample_random_access) == mp4e_status_ok
 	assert mp_4_e_close(mux) == mp4e_status_ok
 	assert file.data.len > sample.len
 
